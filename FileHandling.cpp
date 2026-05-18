@@ -1,70 +1,259 @@
+#ifndef FILEHANDLER_H
+#define FILEHANDLER_H
+
+#include "common.h"
 #include <iostream>
 #include <fstream>
-#include <string>
 
 using namespace std;
 
-// This structure must be consistent across all group members
-struct Student {
-    int id;
-    char name[50]; // Use char array for binary safety
-    float marks[5];
-    float gpa;
-};
-
-class FileHandler {
+class FileHandler
+{
 private:
-    const char* fileName = "students.dat";
-    const char* backupName = "students_backup.dat";
+
+    const string studentFile = "students.txt";
+    const string teacherFile = "teachers.txt";
+
+    const string studentBackup = "students_backup.txt";
+    const string teacherBackup = "teachers_backup.txt";
 
 public:
-    // 1. Save student records to file
-    void saveToFile(Student students[], int count) {
-        ofstream outFile(fileName, ios::binary | ios::out | ios::trunc);
 
-        if (!outFile) {
-            cerr << "Error: Could not open file for writing!" << endl;
+    // ==================================================
+    // 1. SAVE STUDENT DATA
+    // ==================================================
+
+    void saveStudentsToFile(Student students[], int count)
+    {
+        ofstream outFile(studentFile);
+
+        if (!outFile)
+        {
+            cerr << "Error opening student file!" << endl;
             return;
         }
 
-        // Write the entire array of records at once
-        outFile.write(reinterpret_cast<char*>(students), sizeof(Student) * count);
+        outFile << count << endl;
 
-        outFile.close();
-        cout << "Data saved successfully to " << fileName << endl;
-        autoBackup();
-    }
+        for (int i = 0; i < count; i++)
+        {
+            outFile << students[i].id << endl;
+            outFile << students[i].name << endl;
 
-    // 2. Load student records from file
-    // Returns the number of students loaded
-    int loadFromFile(Student students[], int maxCapacity) {
-        ifstream inFile(fileName, ios::binary | ios::in);
+            for (int j = 0; j < 6; j++)
+            {
+                outFile << students[i].marks[j] << " ";
+            }
 
-        if (!inFile) {
-            cout << "No existing data file found." << endl;
-            return 0;
+            outFile << endl;
+
+            for (int j = 0; j < 6; j++)
+            {
+                outFile << students[i].subject[j] << endl;
+            }
+
+            for (int j = 0; j < 6; j++)
+            {
+                outFile << students[i].examDate[j] << endl;
+            }
+
+            outFile << students[i].grade << endl;
+            outFile << students[i].attendance << endl;
+
+            outFile << students[i].username << endl;
+            outFile << students[i].password << endl;
         }
 
-        int count = 0;
-        // Read records one by one until end of file or max capacity is reached
-        while (count < maxCapacity && inFile.read(reinterpret_cast<char*>(&students[count]), sizeof(Student))) {
-            count++;
+        outFile.close();
+
+        cout << "Student data saved successfully." << endl;
+
+        backupData();
+    }
+
+    // ==================================================
+    // 2. LOAD STUDENT DATA
+    // ==================================================
+
+    void loadStudentsFromFile(Student students[], int &count)
+    {
+        ifstream inFile(studentFile);
+
+        if (!inFile)
+        {
+            cout << "No student file found." << endl;
+            count = 0;
+            return;
+        }
+
+        inFile >> count;
+        inFile.ignore();
+
+        for (int i = 0; i < count; i++)
+        {
+            inFile >> students[i].id;
+            inFile.ignore();
+
+            getline(inFile, students[i].name);
+
+            for (int j = 0; j < 6; j++)
+            {
+                inFile >> students[i].marks[j];
+            }
+
+            inFile.ignore();
+
+            for (int j = 0; j < 6; j++)
+            {
+                getline(inFile, students[i].subject[j]);
+            }
+
+            for (int j = 0; j < 6; j++)
+            {
+                getline(inFile, students[i].examDate[j]);
+            }
+
+            inFile >> students[i].grade;
+            inFile >> students[i].attendance;
+
+            inFile.ignore();
+
+            getline(inFile, students[i].username);
+            getline(inFile, students[i].password);
         }
 
         inFile.close();
-        return count;
+
+        cout << "Student data loaded successfully." << endl;
     }
 
-    // 3. Backup student data automatically
-    void autoBackup() {
-        ifstream src(fileName, ios::binary);
-        ofstream dst(backupName, ios::binary | ios::trunc);
+    // ==================================================
+    // 3. SAVE TEACHER DATA
+    // ==================================================
 
-        if (src && dst) {
-            dst << src.rdbuf(); // Use rdbuf() for an efficient file copy
-            src.close();
-            dst.close();
+    void saveTeachersToFile(Teacher teachers[], int count)
+    {
+        ofstream outFile(teacherFile);
+
+        if (!outFile)
+        {
+            cerr << "Error opening teacher file!" << endl;
+            return;
         }
+
+        outFile << count << endl;
+
+        for (int i = 0; i < count; i++)
+        {
+            outFile << teachers[i].username << endl;
+            outFile << teachers[i].password << endl;
+        }
+
+        outFile.close();
+
+        cout << "Teacher data saved successfully." << endl;
+
+        backupData();
+    }
+
+    // ==================================================
+    // 4. LOAD TEACHER DATA
+    // ==================================================
+
+    void loadTeachersFromFile(Teacher teachers[], int &count)
+    {
+        ifstream inFile(teacherFile);
+
+        if (!inFile)
+        {
+            cout << "No teacher file found." << endl;
+            count = 0;
+            return;
+        }
+
+        inFile >> count;
+        inFile.ignore();
+
+        for (int i = 0; i < count; i++)
+        {
+            getline(inFile, teachers[i].username);
+            getline(inFile, teachers[i].password);
+        }
+
+        inFile.close();
+
+        cout << "Teacher data loaded successfully." << endl;
+    }
+
+    // ==================================================
+    // 5. BACKUP SYSTEM
+    // ==================================================
+
+    void backupData()
+    {
+        // ---------- Student Backup ----------
+
+        ifstream srcStudent(studentFile);
+        ofstream dstStudent(studentBackup);
+
+        if (srcStudent && dstStudent)
+        {
+            dstStudent << srcStudent.rdbuf();
+        }
+
+        srcStudent.close();
+        dstStudent.close();
+
+        // ---------- Teacher Backup ----------
+
+        ifstream srcTeacher(teacherFile);
+        ofstream dstTeacher(teacherBackup);
+
+        if (srcTeacher && dstTeacher)
+        {
+            dstTeacher << srcTeacher.rdbuf();
+        }
+
+        srcTeacher.close();
+        dstTeacher.close();
+
+        cout << "Backup completed successfully." << endl;
+    }
+
+    // ==================================================
+    // 6. RESTORE BACKUP
+    // ==================================================
+
+    void restoreBackup()
+    {
+        // ---------- Restore Students ----------
+
+        ifstream backupStudent(studentBackup);
+        ofstream restoreStudent(studentFile);
+
+        if (backupStudent && restoreStudent)
+        {
+            restoreStudent << backupStudent.rdbuf();
+        }
+
+        backupStudent.close();
+        restoreStudent.close();
+
+        // ---------- Restore Teachers ----------
+
+        ifstream backupTeacher(teacherBackup);
+        ofstream restoreTeacher(teacherFile);
+
+        if (backupTeacher && restoreTeacher)
+        {
+            restoreTeacher << backupTeacher.rdbuf();
+        }
+
+        backupTeacher.close();
+        restoreTeacher.close();
+
+        cout << "Backup restored successfully." << endl;
     }
 };
 
+#endif
