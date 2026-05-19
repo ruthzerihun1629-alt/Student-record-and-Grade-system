@@ -7,252 +7,356 @@
 
 using namespace std;
 
+// ==================================================
+// SAFE BINARY STRUCTS (IMPORTANT FIX)
+// ==================================================
+
+struct StudentBinary
+{
+    int id;
+    char name[50];
+    char department[30];
+    float marks[MAX_SUBJECTS];
+    char username[30];
+    char password[30];
+    char grade;
+    float attendance;
+};
+
+struct TeacherBinary
+{
+    char username[30];
+    char password[30];
+    char department[30];
+};
+
 class FileHandler
 {
 private:
 
+    // TEXT FILES
     const string studentFile = "students.txt";
     const string teacherFile = "teachers.txt";
 
     const string studentBackup = "students_backup.txt";
     const string teacherBackup = "teachers_backup.txt";
 
+    // BINARY FILES
+    const string studentBinaryFile = "students.dat";
+    const string teacherBinaryFile = "teachers.dat";
+
 public:
 
     // ==================================================
-    // 1. SAVE STUDENT DATA
+    // TEXT SAVE STUDENTS
     // ==================================================
 
-    void saveStudentsToFile(Student students[], int count)
+    void saveStudentsText()
     {
-        ofstream outFile(studentFile);
+        ofstream out(studentFile);
+        out << students.size() << endl;
 
-        if (!outFile)
+        for (auto &s : students)
         {
-            cerr << "Error opening student file!" << endl;
-            return;
+            out << s.id << endl;
+            out << s.name << endl;
+            out << s.department << endl;
+
+            for (int i = 0; i < MAX_SUBJECTS; i++)
+                out << s.marks[i] << " ";
+            out << endl;
+
+            for (int i = 0; i < MAX_SUBJECTS; i++)
+                out << s.subjects[i] << endl;
+
+            for (int i = 0; i < MAX_SUBJECTS; i++)
+                out << s.examDate[i] << endl;
+
+            out << s.grade << endl;
+            out << s.attendance << endl;
+
+            out << s.username << endl;
+            out << s.password << endl;
         }
 
-        outFile << count << endl;
-
-        for (int i = 0; i < count; i++)
-        {
-            outFile << students[i].id << endl;
-            outFile << students[i].name << endl;
-
-            for (int j = 0; j < 6; j++)
-            {
-                outFile << students[i].marks[j] << " ";
-            }
-
-            outFile << endl;
-
-            for (int j = 0; j < 6; j++)
-            {
-                outFile << students[i].subject[j] << endl;
-            }
-
-            for (int j = 0; j < 6; j++)
-            {
-                outFile << students[i].examDate[j] << endl;
-            }
-
-            outFile << students[i].grade << endl;
-            outFile << students[i].attendance << endl;
-
-            outFile << students[i].username << endl;
-            outFile << students[i].password << endl;
-        }
-
-        outFile.close();
-
-        cout << "Student data saved successfully." << endl;
-
+        out.close();
         backupData();
     }
 
     // ==================================================
-    // 2. LOAD STUDENT DATA
+    // TEXT LOAD STUDENTS
     // ==================================================
 
-    void loadStudentsFromFile(Student students[], int &count)
+    void loadStudentsText()
     {
-        ifstream inFile(studentFile);
+        ifstream in(studentFile);
 
-        if (!inFile)
-        {
-            cout << "No student file found." << endl;
-            count = 0;
-            return;
-        }
+        if (!in) return;
 
-        inFile >> count;
-        inFile.ignore();
+        int count;
+        in >> count;
+        in.ignore();
+
+        students.clear();
 
         for (int i = 0; i < count; i++)
         {
-            inFile >> students[i].id;
-            inFile.ignore();
+            Student s;
 
-            getline(inFile, students[i].name);
+            in >> s.id;
+            in.ignore();
 
-            for (int j = 0; j < 6; j++)
-            {
-                inFile >> students[i].marks[j];
-            }
+            getline(in, s.name);
+            getline(in, s.department);
 
-            inFile.ignore();
+            for (int j = 0; j < MAX_SUBJECTS; j++)
+                in >> s.marks[j];
 
-            for (int j = 0; j < 6; j++)
-            {
-                getline(inFile, students[i].subject[j]);
-            }
+            in.ignore();
 
-            for (int j = 0; j < 6; j++)
-            {
-                getline(inFile, students[i].examDate[j]);
-            }
+            for (int j = 0; j < MAX_SUBJECTS; j++)
+                getline(in, s.subjects[j]);
 
-            inFile >> students[i].grade;
-            inFile >> students[i].attendance;
+            for (int j = 0; j < MAX_SUBJECTS; j++)
+                getline(in, s.examDate[j]);
 
-            inFile.ignore();
+            in >> s.grade;
+            in >> s.attendance;
+            in.ignore();
 
-            getline(inFile, students[i].username);
-            getline(inFile, students[i].password);
+            getline(in, s.username);
+            getline(in, s.password);
+
+            students.push_back(s);
         }
 
-        inFile.close();
-
-        cout << "Student data loaded successfully." << endl;
+        in.close();
     }
 
     // ==================================================
-    // 3. SAVE TEACHER DATA
+    // TEXT DELETE STUDENT
     // ==================================================
 
-    void saveTeachersToFile(Teacher teachers[], int count)
+    void deleteStudentText(int id)
     {
-        ofstream outFile(teacherFile);
-
-        if (!outFile)
+        for (auto it = students.begin(); it != students.end(); ++it)
         {
-            cerr << "Error opening teacher file!" << endl;
-            return;
+            if (it->id == id)
+            {
+                students.erase(it);
+                saveStudentsText();
+                return;
+            }
+        }
+    }
+
+    // ==================================================
+    // TEXT SAVE TEACHERS
+    // ==================================================
+
+    void saveTeachersText()
+    {
+        ofstream out(teacherFile);
+        out << teachers.size() << endl;
+
+        for (auto &t : teachers)
+        {
+            out << t.username << endl;
+            out << t.password << endl;
+            out << t.department << endl;
         }
 
-        outFile << count << endl;
-
-        for (int i = 0; i < count; i++)
-        {
-            outFile << teachers[i].username << endl;
-            outFile << teachers[i].password << endl;
-        }
-
-        outFile.close();
-
-        cout << "Teacher data saved successfully." << endl;
-
+        out.close();
         backupData();
     }
 
     // ==================================================
-    // 4. LOAD TEACHER DATA
+    // TEXT LOAD TEACHERS
     // ==================================================
 
-    void loadTeachersFromFile(Teacher teachers[], int &count)
+    void loadTeachersText()
     {
-        ifstream inFile(teacherFile);
+        ifstream in(teacherFile);
 
-        if (!inFile)
-        {
-            cout << "No teacher file found." << endl;
-            count = 0;
-            return;
-        }
+        if (!in) return;
 
-        inFile >> count;
-        inFile.ignore();
+        int count;
+        in >> count;
+        in.ignore();
+
+        teachers.clear();
 
         for (int i = 0; i < count; i++)
         {
-            getline(inFile, teachers[i].username);
-            getline(inFile, teachers[i].password);
+            Teacher t;
+
+            getline(in, t.username);
+            getline(in, t.password);
+            getline(in, t.department);
+
+            teachers.push_back(t);
         }
 
-        inFile.close();
-
-        cout << "Teacher data loaded successfully." << endl;
+        in.close();
     }
 
     // ==================================================
-    // 5. BACKUP SYSTEM
+    // TEXT DELETE TEACHER
+    // ==================================================
+
+    void deleteTeacherText(string username)
+    {
+        for (auto it = teachers.begin(); it != teachers.end(); ++it)
+        {
+            if (it->username == username)
+            {
+                teachers.erase(it);
+                saveTeachersText();
+                return;
+            }
+        }
+    }
+
+    // ==================================================
+    // ================= BINARY SECTION =================
+    // ==================================================
+
+    // CONVERT STUDENT → BINARY STRUCT
+    StudentBinary toBinary(const Student &s)
+    {
+        StudentBinary b;
+
+        b.id = s.id;
+        b.grade = s.grade;
+        b.attendance = s.attendance;
+
+        strncpy(b.name, s.name.c_str(), sizeof(b.name));
+        strncpy(b.department, s.department.c_str(), sizeof(b.department));
+        strncpy(b.username, s.username.c_str(), sizeof(b.username));
+        strncpy(b.password, s.password.c_str(), sizeof(b.password));
+
+        for (int i = 0; i < MAX_SUBJECTS; i++)
+            b.marks[i] = s.marks[i];
+
+        return b;
+    }
+
+    // ==================================================
+    // BINARY SAVE STUDENTS
+    // ==================================================
+
+    void saveStudentsBinary()
+    {
+        ofstream out(studentBinaryFile, ios::binary);
+
+        for (auto &s : students)
+        {
+            StudentBinary b = toBinary(s);
+            out.write((char*)&b, sizeof(b));
+        }
+
+        out.close();
+    }
+
+    // ==================================================
+    // BINARY LOAD STUDENTS
+    // ==================================================
+
+    void loadStudentsBinary()
+    {
+        ifstream in(studentBinaryFile, ios::binary);
+
+        if (!in) return;
+
+        students.clear();
+
+        StudentBinary b;
+
+        while (in.read((char*)&b, sizeof(b)))
+        {
+            Student s;
+
+            s.id = b.id;
+            s.grade = b.grade;
+            s.attendance = b.attendance;
+
+            s.name = b.name;
+            s.department = b.department;
+            s.username = b.username;
+            s.password = b.password;
+
+            for (int i = 0; i < MAX_SUBJECTS; i++)
+                s.marks[i] = b.marks[i];
+
+            students.push_back(s);
+        }
+
+        in.close();
+    }
+
+    // ==================================================
+    // BINARY DELETE STUDENT
+    // ==================================================
+
+    void deleteStudentBinary(int id)
+    {
+        ifstream in(studentBinaryFile, ios::binary);
+
+        vector<StudentBinary> temp;
+        StudentBinary b;
+
+        while (in.read((char*)&b, sizeof(b)))
+        {
+            if (b.id != id)
+                temp.push_back(b);
+        }
+
+        in.close();
+
+        ofstream out(studentBinaryFile, ios::binary | ios::trunc);
+
+        for (auto &x : temp)
+            out.write((char*)&x, sizeof(x));
+
+        out.close();
+    }
+
+    // ==================================================
+    // BACKUP (TEXT ONLY)
     // ==================================================
 
     void backupData()
     {
-        // ---------- Student Backup ----------
+        ifstream s(studentFile);
+        ofstream sb(studentBackup);
 
-        ifstream srcStudent(studentFile);
-        ofstream dstStudent(studentBackup);
+        if (s && sb)
+            sb << s.rdbuf();
 
-        if (srcStudent && dstStudent)
-        {
-            dstStudent << srcStudent.rdbuf();
-        }
+        ifstream t(teacherFile);
+        ofstream tb(teacherBackup);
 
-        srcStudent.close();
-        dstStudent.close();
-
-        // ---------- Teacher Backup ----------
-
-        ifstream srcTeacher(teacherFile);
-        ofstream dstTeacher(teacherBackup);
-
-        if (srcTeacher && dstTeacher)
-        {
-            dstTeacher << srcTeacher.rdbuf();
-        }
-
-        srcTeacher.close();
-        dstTeacher.close();
-
-        cout << "Backup completed successfully." << endl;
+        if (t && tb)
+            tb << t.rdbuf();
     }
 
     // ==================================================
-    // 6. RESTORE BACKUP
+    // RESTORE BACKUP
     // ==================================================
 
     void restoreBackup()
     {
-        // ---------- Restore Students ----------
+        ifstream sb(studentBackup);
+        ofstream s(studentFile);
 
-        ifstream backupStudent(studentBackup);
-        ofstream restoreStudent(studentFile);
+        if (sb && s)
+            s << sb.rdbuf();
 
-        if (backupStudent && restoreStudent)
-        {
-            restoreStudent << backupStudent.rdbuf();
-        }
+        ifstream tb(teacherBackup);
+        ofstream t(teacherFile);
 
-        backupStudent.close();
-        restoreStudent.close();
-
-        // ---------- Restore Teachers ----------
-
-        ifstream backupTeacher(teacherBackup);
-        ofstream restoreTeacher(teacherFile);
-
-        if (backupTeacher && restoreTeacher)
-        {
-            restoreTeacher << backupTeacher.rdbuf();
-        }
-
-        backupTeacher.close();
-        restoreTeacher.close();
-
-        cout << "Backup restored successfully." << endl;
+        if (tb && t)
+            t << tb.rdbuf();
     }
 };
 
